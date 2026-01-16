@@ -1619,7 +1619,28 @@ input[type="text"]:focus, textarea:focus, select:focus{
 
 
     </div>
-  <aside class="right" aria-label="Generated statement">
+ <aside class="right" aria-label="Generated statement">
+  <fieldset class="statements-shell">
+    <legend>Your AI Disclosure Statement</legend>
+
+    <div class="outputs">
+      <div class="card">
+        <div class="headerline">
+          <h3>Final statement</h3>
+          <div class="actions">
+            <button class="secondary" id="copyFinal">Copy</button>
+            <button class="secondary" id="dlFinal">Download .txt</button>
+          </div>
+        </div>
+
+        <div class="out" id="finalStatement">
+          Select options on the left to generate your disclosure statement.
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</aside>
+
 <fieldset class="statements-shell">
       <legend>Your AI Disclosure Statement</legend><div class="btns">
       
@@ -1643,7 +1664,8 @@ input[type="text"]:focus, textarea:focus, select:focus{
         <div class="out" id="generatedText"></div>
       </div>
 
-      <div class="card" id="finalCard">
+     <div class="card" id="finalCard" style="display:none;">
+
         <div class="headerline">
           <h3>Editable</h3>
           <div class="actions">
@@ -2178,7 +2200,7 @@ function generateAll() {
       const parts = buildBaseParts();
       const draft = buildDisclosure(parts);
 
-      $('generatedText').textContent = capFirst(draft);
+     refineWithLLM(capFirst(draft));
 
       // Only overwrite the final statement if the author has not started editing it
       const finalEl = $('finalText');
@@ -2388,6 +2410,27 @@ document.addEventListener('DOMContentLoaded', function () {
   box.innerHTML = ``;
 noteEl.insertAdjacentElement('afterend', box);
 });
+
+  async function refineWithLLM(baseStatement) {
+  const out = document.getElementById("generatedText");
+  if (!out) return;
+
+  out.textContent = "Refining your AI disclosure statement…";
+
+  try {
+    const res = await fetch("/api/refine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ baseStatement })
+    });
+
+    const data = await res.json();
+    out.textContent = data?.refinedStatement || baseStatement;
+  } catch (e) {
+    out.textContent = baseStatement;
+  }
+}
+
 </script>
 
 </body>
